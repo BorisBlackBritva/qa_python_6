@@ -1,19 +1,13 @@
 import pytest
-from selenium import webdriver
 from pages.order_page import OrderPage
-import allure
 
 
 class TestGetOrderEntryPoints:
     CREDS1 = OrderPage.FIRST_FORM_DATA
     CREDS2 = OrderPage.SECOND_FORM_DATA
 
-    @classmethod
-    def setup_class(cls):
-        cls.driver = webdriver.Firefox()
-
-    def test_get_order_important_fields(self):
-        order_page = OrderPage(self.driver)
+    def test_get_order_important_fields(self, driver):
+        order_page = OrderPage(driver)
         name = self.CREDS1['name'][0]
         surname = self.CREDS1['surname'][0]
         address = self.CREDS1['address'][0]
@@ -48,8 +42,8 @@ class TestGetOrderEntryPoints:
 
         ])
     def test_get_order_all_fields(self, name, surname, address, metro_station,
-                                  tel_number, delivery_date, term_value, scooter_color, comment):
-        order_page = OrderPage(self.driver)
+                                  tel_number, delivery_date, term_value, scooter_color, comment, driver):
+        order_page = OrderPage(driver)
 
         order_page.go_order_page()
         order_page.enter_name(name)
@@ -67,7 +61,3 @@ class TestGetOrderEntryPoints:
         order_page.confirm_order()
 
         assert 'Заказ оформлен' in order_page.get_order_info_title_text()
-
-    @classmethod
-    def teardown_class(cls):
-        cls.driver.quit()

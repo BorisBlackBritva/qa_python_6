@@ -1,11 +1,12 @@
 import datetime
+import allure
 from selenium.webdriver import Keys
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from pages.base_page import BasePage
 
 
-class OrderPage():
+class OrderPage(BasePage):
     # Страница с формой 1
     ORDER_PAGE_URL = 'https://qa-scooter.praktikum-services.ru/order'
     FIRST_FORM_PAGE_TITLE = [By.XPATH, '//div[text()="Для кого самокат"]']  # Титул первой страницы заказа
@@ -39,7 +40,6 @@ class OrderPage():
                                                                        f'contains(@aria-label, "{current_month_and_year}")]']  # День в датапикере
     NEXT_MONTH_BUTTON = [By.XPATH, '//button[text()="Next Month"]']  # Кнопка переключения на след. месяц
 
-
     # Поля формы 2
     DELIVERY_DATE_FIELD = [By.XPATH, '//input[@placeholder="* Когда привезти самокат"]']  # Поле "Когда привезти самокат"
     RENT_TERM_FIELD = [By.XPATH, '//div[text()="* Срок аренды"]']  # Поле "Срок аренды"
@@ -63,52 +63,63 @@ class OrderPage():
     ORDER_INFO_TITLE = [By.XPATH, '//div[text()="Заказ оформлен"]']  # Титул окна информации о заказе
 
     def __init__(self, driver):
-        self.driver = driver
+        super().__init__(driver)
 
+    @allure.step('Переход на страницу оформления заказа')
     def go_order_page(self):
         self.driver.get(self.ORDER_PAGE_URL)
-        WebDriverWait(self.driver, 3).until(EC.presence_of_element_located(self.FIRST_FORM_PAGE_TITLE))
+        self.wait(EC.presence_of_element_located, self.FIRST_FORM_PAGE_TITLE)
 
+    @allure.step('Получение текста заголовка страницы оформления заказа')
     def get_first_order_page_title(self):
-        return self.driver.find_element(*self.FIRST_FORM_PAGE_TITLE).text
+        return self.get_elem_text(self.FIRST_FORM_PAGE_TITLE)
 
+    @allure.step('Ввод имени на форме заказа')
     def enter_name(self, name):
-        self.driver.find_element(*self.NAME_FIELD).send_keys(name)
+        self.send_keys(self.NAME_FIELD, name)
 
+    @allure.step('Ввод фамилии на форме заказа')
     def enter_surname(self, surname):
-        self.driver.find_element(*self.SURNAME_FIELD).send_keys(surname)
+        self.send_keys(self.SURNAME_FIELD, surname)
 
+    @allure.step('Ввод адреса на форме заказа')
     def enter_address(self, address):
-        self.driver.find_element(*self.ADDRESS_FIELD).send_keys(address)
+        self.send_keys(self.ADDRESS_FIELD, address)
 
+    @allure.step('Выбор станции метро из списка на форме заказа')
     def choose_metro_station_value_via_list(self, station_name):
-        self.driver.find_element(*self.METRO_STATION_FIELD).click()
-        WebDriverWait(self.driver, 3).until(EC.visibility_of_element_located(self.METRO_STATION_LIST))
-        self.driver.find_element(*self.METRO_STATION_VALUE(station_name)).click()
+        self.click(self.METRO_STATION_FIELD)
+        self.wait(EC.visibility_of_element_located, self.METRO_STATION_LIST)
+        self.click(self.METRO_STATION_VALUE(station_name))
 
+    @allure.step('Поиск и выбор станции метро из списка на форме заказа')
     def choose_metro_station_value_via_type(self, station_name):
-        self.driver.find_element(*self.METRO_STATION_FIELD).send_keys(station_name)
-        WebDriverWait(self.driver, 3).until(EC.visibility_of_element_located(self.METRO_STATION_LIST))
-        self.driver.find_element(*self.METRO_STATION_VALUE(station_name)).click()
+        self.send_keys(self.METRO_STATION_FIELD, station_name)
+        self.wait(EC.visibility_of_element_located, self.METRO_STATION_LIST)
+        self.click(self.METRO_STATION_VALUE(station_name))
 
+    @allure.step('Ввод номера телефона на форме заказа')
     def enter_tel_number(self, tel_number):
-        self.driver.find_element(*self.TEL_NUM_FIELD).send_keys(tel_number)
+        self.send_keys(self.TEL_NUM_FIELD, tel_number)
 
+    @allure.step('Ввод фамилии на форме заказа')
     def click_continue(self):
-        self.driver.find_element(*self.FIRST_FORM_CONTINUE_BUTTON).click()
-        WebDriverWait(self.driver, 3).until(EC.presence_of_element_located(self.SECOND_FORM_PAGE_TITLE))
+        self.click(self.FIRST_FORM_CONTINUE_BUTTON)
+        self.wait(EC.presence_of_element_located, self.SECOND_FORM_PAGE_TITLE)
 
+    @allure.step('Выбор даты заказа через календарь на форме заказа')
     def choose_delivery_date_via_datepicker(self, day_month):
         current_day = datetime.date.today().day
 
-        self.driver.find_element(*self.DELIVERY_DATE_FIELD).click()
-        WebDriverWait(self.driver, 3).until(EC.presence_of_element_located(self.CURRENT_MONTH))
+        self.click(self.DELIVERY_DATE_FIELD)
+        self.wait(EC.presence_of_element_located, self.CURRENT_MONTH)
         for _ in range(day_month[1]):
-            self.driver.find_element(*self.NEXT_MONTH_BUTTON).click()
-        current_month_and_year = self.driver.find_element(*self.CURRENT_MONTH).text.replace('ь', 'я')
+            self.click(self.NEXT_MONTH_BUTTON)
+        current_month_and_year = self.find_element(self.CURRENT_MONTH).text.replace('ь', 'я')
         day = current_day if day_month[0] == 0 else day_month[0]
-        self.driver.find_element(*self.DAY(current_month_and_year=current_month_and_year, day=day)).click()
+        self.click(self.DAY(current_month_and_year=current_month_and_year, day=day))
 
+    @allure.step('Ввод даты заказа в поле на форме заказа')
     def choose_delivery_date_via_type(self, date):
         current_day = datetime.date.today().day
         current_month = datetime.date.today().month
@@ -118,27 +129,33 @@ class OrderPage():
         month = current_month if date[1] == 0 else current_month + date[1]
         year = current_year if date[2] == 0 else date[2]
         date = f'{day}.{month}.{year}'
-        self.driver.find_element(*self.DELIVERY_DATE_FIELD).send_keys(date)
-        self.driver.find_element(*self.DELIVERY_DATE_FIELD).send_keys(Keys.ENTER)
+        self.send_keys(self.DELIVERY_DATE_FIELD, date)
+        self.send_keys(self.DELIVERY_DATE_FIELD, Keys.ENTER)
 
+    @allure.step('Выбор продолжительности аренды на форме заказа')
     def choose_term_value(self, term_value):
-        self.driver.find_element(*self.RENT_TERM_FIELD).click()
-        self.driver.find_element(*self.RENT_TERM_VALUE(term_value)).click()
+        self.click(self.RENT_TERM_FIELD)
+        self.click(self.RENT_TERM_VALUE(term_value))
 
+    @allure.step('Выбор цвета самоката на форме заказа')
     def choose_scooter_color(self, color):
-        self.driver.find_element(*self.SCOOTER_COLOR_VALUE(color)).click()
+        self.click(self.SCOOTER_COLOR_VALUE(color))
 
+    @allure.step('Ввод комментария на форме заказа')
     def enter_comment(self, comment):
-        self.driver.find_element(*self.COMMENT_FIELD).send_keys(comment)
+        self.send_keys(self.COMMENT_FIELD, comment)
 
+    @allure.step('Нажимаем кнопку "Заказать" после заполнения формы')
     def complete_order(self):
-        self.driver.find_element(*self.SECOND_FORM_COMPLETE_ORDER_BUTTON).click()
-        WebDriverWait(self.driver, 3).until(EC.presence_of_element_located(self.CONFIRM_WINDOW_TITLE))
+        self.click(self.SECOND_FORM_COMPLETE_ORDER_BUTTON)
+        self.wait(EC.presence_of_element_located, self.CONFIRM_WINDOW_TITLE)
 
+    @allure.step('Подтверждаем заказ')
     def confirm_order(self):
-        self.driver.find_element(*self.CONFIRM_WINDOW_ORDER_BUTTON).click()
-        WebDriverWait(self.driver, 3).until(EC.presence_of_element_located(self.ORDER_INFO_TITLE))
+        self.click(self.CONFIRM_WINDOW_ORDER_BUTTON)
+        self.wait(EC.presence_of_element_located, self.ORDER_INFO_TITLE)
 
+    @allure.step('Получение текста заголовка окна подтверждения заказа')
     def get_order_info_title_text(self):
-        title_text = self.driver.find_element(*self.ORDER_INFO_TITLE).text
+        title_text = self.get_elem_text(self.ORDER_INFO_TITLE)
         return title_text
